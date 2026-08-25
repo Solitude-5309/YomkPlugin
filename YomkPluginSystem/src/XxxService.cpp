@@ -15,6 +15,6 @@ int XxxService::init()
 
 YomkResponse XxxService::version(YomkPkgPtr pkg)
 {
-    std::string version = "YomkPlugin v" EXTENSION_VERSION " (WIP)";
+    std::string version = "YomkPluginSystem v" EXTENSION_VERSION " (WIP)";
     return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, version));
 }

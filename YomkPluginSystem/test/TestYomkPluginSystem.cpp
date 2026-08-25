@@ -1,5 +1,5 @@
 #include <YomkServer/YomkAPI.h>
-#include <YomkPlugin/XxxService.h>
+#include <YomkPluginSystem/XxxService.h>
 #include <iostream>
 
 using namespace yomk;

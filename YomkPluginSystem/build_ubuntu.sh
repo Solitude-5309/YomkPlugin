@@ -6,7 +6,7 @@
 # 安装后将扩展 lib 注册到系统动态库搜索路径（复用 yomk.conf）并刷新 ldconfig 缓存，新开任意终端即可找到扩展 so
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_NAME="YomkPlugin"
+PROJECT_NAME="YomkPluginSystem"
 BUILD_DIR="${SCRIPT_DIR}/build"
 TEST_DIR="${SCRIPT_DIR}/test"
 TEST_BUILD_DIR="${TEST_DIR}/build"
@@ -119,5 +119,5 @@ unset _ORIG_DIR
 echo "编译完成，扩展库已注册到系统动态库缓存，新开任意终端即可使用"
 ldconfig -p | grep -i "${PROJECT_NAME}" || true
 if [ "${BUILD_TEST}" = "ON" ]; then
-    echo "测试程序已安装到 ${INSTALL_DIR}/bin，可直接运行 TestYomkPlugin 验证"
+    echo "测试程序已安装到 ${INSTALL_DIR}/bin，可直接运行 TestYomkPluginSystem 验证"
 fi

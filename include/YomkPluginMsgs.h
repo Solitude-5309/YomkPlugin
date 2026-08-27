@@ -4,8 +4,8 @@
 #include <vector>
 
 #include <YomkServer/YomkAPI.h>
-#include "../include/YomkPluginInterface.h" /* 编译期相对引用；下游按安装布局 <YomkPluginSystem/YomkPluginInterface.h> 引用 */
-#include "../include/YomkPluginMeta.h"      /* ABI 版本常量，供组装/校验 meta 时使用 */
+#include "YomkPluginInterface.h"
+#include "YomkPluginMeta.h"
 
 /* ------------------------- 数据类 ------------------------- */
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "YomkPluginMsgs.h"
-#include "../include/YomkPlugin.h" /* 编译期相对引用；下游按安装布局 <YomkPluginSystem/YomkPlugin.h> 引用 */
+#include "YomkPlugin.h" /* 编译期相对引用；下游按安装布局 <YomkPluginSystem/YomkPlugin.h> 引用 */
 
 #include <map>
 #include <mutex>

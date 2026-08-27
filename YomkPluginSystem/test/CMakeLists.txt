@@ -12,7 +12,17 @@ message(STATUS "YomkPluginSystem include dirs: ${YomkPluginSystem_INCLUDE_DIRS}"
 message(STATUS "YomkPluginSystem lib dir: ${YomkPluginSystem_LIB_DIR}")
 message(STATUS "YomkPluginSystem libraries: ${YomkPluginSystem_LIBRARIES}")
 
+# 示例插件（SHARED 库，供测试程序 dlopen 加载）
+add_subdirectory(TestPlugin)
+
 add_executable(TestYomkPluginSystem TestYomkPluginSystem.cpp)
+# 内部实现头（消息包/服务类）位于扩展源码 src/ 目录，仅测试编译期引用，不随 install 分发
+target_include_directories(TestYomkPluginSystem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+# 插件产物路径编译期固化，测试程序优先按此路径 dlopen（构建目录直接可测）
+target_compile_definitions(TestYomkPluginSystem PRIVATE
+    TEST_PLUGIN_BUILD_PATH="$<TARGET_FILE:TestPlugin>"
+    EXTENSION_VERSION="${YomkPluginSystem_VERSION}"
+)
 target_link_libraries(TestYomkPluginSystem PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
 
 # 测试程序随扩展一并安装到 <安装路径>/bin，供用户在任意终端直接运行验证

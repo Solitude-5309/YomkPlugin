@@ -181,7 +181,7 @@ YomkResponse YomkPluginLoader::create(YomkPkgPtr pkg)
         }
 
         /* 锁外调用插件工厂；shared_ptr 自定义 deleter 绑定该库的 delete_instance */
-        YomkPluginInterface *raw = createFn(req->d.configFile.c_str());
+        YomkPluginInterface *raw = createFn(req->d.instanceName.c_str(), req->d.configFile.c_str());
         if (!raw)
         {
             return {YomkResponse::eNo, "create instance failed: " + req->d.libId};

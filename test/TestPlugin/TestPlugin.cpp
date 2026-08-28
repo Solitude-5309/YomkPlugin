@@ -1,18 +1,18 @@
 /*
  * TestPlugin：插件系统示例插件
  * 演示完整 ABI 契约：meta 常量导出 + 实例工厂 + 实例删除。
- * 实例命名规则：config_file 非空时直接用作实例名（演示透传参数用法），
- * 否则按计数后缀自动生成（TestInstance-1/2/...），保证同插件内唯一。
+ * instance_name 由宿主创建实例时指定（同一插件内唯一），
+ * config_file 独立透传，两者互不影响。
  */
 #include <YomkPluginSystem/YomkPlugin.h>
 
-#include <atomic>
 #include <string>
 
 class MyInstance : public YomkPluginInterface
 {
 public:
-    MyInstance(const std::string &name) : m_name(name) {}
+    MyInstance(const std::string &name, const std::string &configFile)
+        : m_name(name), m_configFile(configFile) {}
     virtual ~MyInstance() {}
 
     virtual const char *instanceName() const override { return m_name.c_str(); }
@@ -20,7 +20,8 @@ public:
     /* instanceId 不覆写，默认等于 instanceName */
 
 private:
-    std::string m_name;
+    std::string m_name;       /* 宿主指定的实例名 */
+    std::string m_configFile; /* 透传配置文件，插件自行决定是否使用 */
 };
 
 static const YomkPluginMeta g_meta = {
@@ -31,27 +32,20 @@ static const YomkPluginMeta g_meta = {
     "Yomk",
     "Sample plugin for YomkPluginSystem testing"};
 
-static std::atomic<int> g_seq(0);
-
 static const YomkPluginMeta *metaFn()
 {
     return &g_meta;
 }
 
-static YomkPluginInterface *createFn(const char *config_file)
+static YomkPluginInterface *createFn(const char *instance_name, const char *config_file)
 {
     try
     {
-        std::string name;
-        if (config_file && *config_file)
+        if (!instance_name || !*instance_name)
         {
-            name = config_file; /* 透传参数由插件实现自行决定是否使用 */
+            return nullptr; /* 实例名由宿主指定，必填 */
         }
-        else
-        {
-            name = "TestInstance-" + std::to_string(++g_seq);
-        }
-        return new MyInstance(name);
+        return new MyInstance(instance_name, config_file ? config_file : "");
     }
     catch (...)
     {

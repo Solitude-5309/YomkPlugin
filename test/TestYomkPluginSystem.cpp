@@ -167,21 +167,19 @@ int main(int argc, char *argv[])
     {
         CreateReq req;
         req.libId = libId;
+        req.instanceName = "inst-1";
         YomkResponse resp = YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req));
-        check(isOk(resp), "create_instance #1");
+        check(isOk(resp) && respString(resp) == req.instanceName, "create_instance #1");
         if (isOk(resp))
         {
-            YomkUnPackPkg(resp.m_data, InstanceInfo, info);
-            instName1 = info->d.instanceName;
-            check(info->d.instanceId == instName1 && info->d.instanceType == "demo",
-                  "instance #1 id defaults to name, type is demo");
+            instName1 = respString(resp);
         }
+        req.instanceName = "inst-2";
         resp = YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req));
-        check(isOk(resp), "create_instance #2");
+        check(isOk(resp) && respString(resp) == req.instanceName, "create_instance #2");
         if (isOk(resp))
         {
-            YomkUnPackPkg(resp.m_data, InstanceInfo, info);
-            instName2 = info->d.instanceName;
+            instName2 = respString(resp);
         }
         check(instName1 != instName2 && !instName1.empty(), "instance names unique within plugin");
         check(instanceCount() == 2, "/list_instances count == 2");
@@ -221,6 +219,7 @@ int main(int argc, char *argv[])
               "reload after try_unload");
         CreateReq req;
         req.libId = libId;
+        req.instanceName = "inst-reload";
         check(isOk(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
               "create instance after reload");
         check(isOk(YOMK_REQUEST("/YomkPluginManager/force_unload", YomkMkPtr(String, libId))),
@@ -230,15 +229,18 @@ int main(int argc, char *argv[])
               "reload after force_unload");
     }
 
-    /* ---------- 用例5c：重名实例返回 eNo（config_file 透传用作实例名） ---------- */
+    /* ---------- 用例5c：空实例名 / 重名实例均返回 eNo ---------- */
     {
         CreateReq req;
         req.libId = libId;
-        req.configFile = "dup";
+        req.instanceName = "dup";
         check(isOk(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
-              "create_instance with configFile=dup (pass-through naming)");
+              "create_instance with instanceName=dup");
         check(isNo(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
               "duplicate instance name returns eNo");
+        req.instanceName = "";
+        check(isNo(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
+              "empty instance name returns eNo");
         DestroyReq dreq;
         dreq.libId = libId;
         dreq.instanceName = "dup";
@@ -277,6 +279,7 @@ int main(int argc, char *argv[])
               "load again for introspection");
         CreateReq req;
         req.libId = libId;
+        req.instanceName = "inst-introspect";
         check(isOk(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
               "create instance for introspection");
 

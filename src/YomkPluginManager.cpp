@@ -157,11 +157,20 @@ YomkResponse YomkPluginManager::createInstance(YomkPkgPtr pkg)
     try
     {
         YomkUnPackPkg(pkg, CreateReq, req);
+        if (req->d.instanceName.empty())
+        {
+            return {YomkResponse::eNo, "instance name required"};
+        }
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (!m_plugins.count(req->d.libId))
             {
                 return {YomkResponse::eNo, "plugin not loaded: " + req->d.libId};
+            }
+            auto it = m_instances.find(req->d.libId);
+            if (it != m_instances.end() && it->second.count(req->d.instanceName))
+            {
+                return {YomkResponse::eNo, "duplicate instance name: " + req->d.instanceName};
             }
         }
 
@@ -178,27 +187,18 @@ YomkResponse YomkPluginManager::createInstance(YomkPkgPtr pkg)
             return {YomkResponse::eNo, "empty plugin instance"};
         }
 
-        InstanceInfo info;
-        info.libId = req->d.libId;
-        info.instanceName = inst->instanceName() ? inst->instanceName() : "";
-        info.instanceId = inst->instanceId() ? inst->instanceId() : "";
-        info.instanceType = inst->instanceType() ? inst->instanceType() : "";
-        if (info.instanceName.empty())
-        {
-            return {YomkResponse::eNo, "instance without name"};
-        }
-
         std::lock_guard<std::mutex> lock(m_mutex);
         if (!m_plugins.count(req->d.libId))
         {
             /* 创建期间插件被卸载，inst 随响应销毁 */
             return {YomkResponse::eNo, "plugin unloaded during create: " + req->d.libId};
         }
-        if (!m_instances[req->d.libId].emplace(info.instanceName, inst).second)
+        if (!m_instances[req->d.libId].emplace(req->d.instanceName, inst).second)
         {
-            return {YomkResponse::eNo, "duplicate instance name: " + info.instanceName};
+            /* 并发兜底：创建期间同名实例已被登记 */
+            return {YomkResponse::eNo, "duplicate instance name: " + req->d.instanceName};
         }
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(InstanceInfo, info));
+        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, req->d.instanceName));
     }
     catch (const std::exception &e)
     {

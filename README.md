@@ -20,7 +20,7 @@
 | `/YomkPluginLoader/loadLib` | `PluginPath{path}` | dlopen + 符号解析 + abi/重名校验，返回 libId（= meta.name） |
 | `/YomkPluginLoader/unloadLib` | String libId | 有存活实例拒绝（引用计数保护）；否则移登记 + dlclose |
 | `/YomkPluginLoader/meta` | String libId | 实时调用 meta 导出函数返回 `PluginMeta`，不缓存 |
-| `/YomkPluginLoader/create` | `CreateReq{libId, configFile}` | 调插件工厂创建实例，shared_ptr 绑定 delete_instance 为 deleter |
+| `/YomkPluginLoader/create` | `CreateReq{libId, instanceName, configFile}` | 调插件工厂创建实例，shared_ptr 绑定 delete_instance 为 deleter |
 | `/YomkPluginLoader/delete` | `PluginInstance` | 释放实例（自动触发 delete_instance）并清理存活表失效项 |
 | `/YomkPluginLoader/version` | 无 | 版本查询 |
 | `/YomkPluginLoader/libs` | 无 | 内省：已加载库列表 |
@@ -34,7 +34,7 @@
 | `/YomkPluginManager/load` | `PluginPath{path}` | 加载并登记插件表；仅加载与登记，不自动建实例 |
 | `/YomkPluginManager/try_unload` | String libId | 尝试卸载：有存活实例（含 Manager 之外的持有者）返回 eNo，插件保持加载 |
 | `/YomkPluginManager/force_unload` | String libId | 强制卸载：先删除该插件全部实例，再卸载 |
-| `/YomkPluginManager/create_instance` | `CreateReq{libId, configFile}` | 创建实例并按 instanceName 登记（同插件内重名返回 eNo） |
+| `/YomkPluginManager/create_instance` | `CreateReq{libId, instanceName, configFile}` | 按 instanceName 创建并登记实例（同插件内重名返回 eNo） |
 | `/YomkPluginManager/destroy_instance` | `DestroyReq{libId, instanceName}` | 销毁指定实例 |
 | `/YomkPluginManager/list` | 无 / String libId | 插件表 `PluginMetaArray` |
 | `/YomkPluginManager/list_instances` | 无 / String libId | 实例表 `InstanceInfoArray`（id/name/type/libId） |
@@ -65,12 +65,12 @@ YOMK_PLUGIN_MANAGER_INFO_PLUGINS() / INFO_PLUGIN(libId) / INFO_ALL()
 插件须以 `extern "C"` 导出三个固定符号：
 
 ```cpp
-const YomkPluginMeta *yomk_plugin_meta();                          // 返回静态常量指针
-YomkPluginInterface *yomk_plugin_create_instance(const char *config_file);
-void yomk_plugin_delete_instance(YomkPluginInterface *instance);   // 内部 delete
+const YomkPluginMeta *yomk_plugin_meta();                                         // 返回静态常量指针
+YomkPluginInterface *yomk_plugin_create_instance(const char *instance_name, const char *config_file);
+void yomk_plugin_delete_instance(YomkPluginInterface *instance);                  // 内部 delete
 ```
 
-`config_file` 为透传参数：插件系统不读不解析，原样传给插件工厂，由插件实现自行决定是否使用（允许传空）。配置文件的设计与自动化编排由独立的构建服务负责，不在本扩展范围内。
+`instance_name` 为宿主指定的实例名（同一插件内唯一），插件须以传入名称作为实例名。`config_file` 为透传参数：插件系统不读不解析，原样传给插件工厂，由插件实现自行决定是否使用（允许传空）。配置文件的设计与自动化编排由独立的构建服务负责，不在本扩展范围内。
 
 ## 插件开发指南
 
@@ -97,9 +97,9 @@ static const YomkPluginMeta g_meta = {
 };
 
 static const YomkPluginMeta *metaFn() { return &g_meta; }
-static YomkPluginInterface *createFn(const char *config_file)
+static YomkPluginInterface *createFn(const char *instance_name, const char *config_file)
 {
-    try { return new MyInstance("my-instance"); }
+    try { return new MyInstance(instance_name); }
     catch (...) { return nullptr; } /* 导出函数必须捕获异常 */
 }
 static void deleteFn(YomkPluginInterface *instance) { delete instance; }

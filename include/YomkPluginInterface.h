@@ -6,7 +6,8 @@ class YomkPluginInterface
 public:
     virtual ~YomkPluginInterface() = default;
 
-    /* 实例名：插件系统唯一主键（登记/重名校验/查找/销毁均基于它），返回指针须在实例存活期内有效 */
+    /* 实例名：插件系统唯一主键（登记/重名校验/查找/销毁均基于它），由宿主创建实例时指定；
+     * 返回指针须在实例存活期内有效 */
     virtual const char *instanceName() const = 0;
     /* 实例类型 */
     virtual const char *instanceType() const = 0;

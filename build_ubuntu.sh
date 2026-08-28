@@ -116,8 +116,28 @@ fi
 cd "${_ORIG_DIR}"
 unset _ORIG_DIR
 
-echo "编译完成，扩展库已注册到系统动态库缓存，新开任意终端即可使用"
-ldconfig -p | grep -i "${PROJECT_NAME}" || true
-if [ "${BUILD_TEST}" = "ON" ]; then
-    echo "测试程序已安装到 ${INSTALL_DIR}/bin，可直接运行 TestYomkPluginSystem 验证"
+# ===========================================
+#  安装总结：参照 YomkServer 安装输出格式
+# ===========================================
+_LIB_LINE="$(ldconfig -p | grep -i "lib${PROJECT_NAME}.so" | head -1)"
+
+echo "==========================================="
+echo " ${PROJECT_NAME} 扩展安装成功!"
+echo "-------------------------------------------"
+echo " 安装路径:        ${INSTALL_DIR}"
+echo " YOMK_PREFIX_PATH: ${INSTALL_DIR}"
+echo " 动态库缓存:"
+if [ -n "${_LIB_LINE}" ]; then
+    echo "${_LIB_LINE}"
+else
+    echo "    (未找到 lib${PROJECT_NAME}.so，请检查 ldconfig)"
 fi
+if [ "${BUILD_TEST}" = "ON" ]; then
+    echo " 测试程序列表（安装于 ${INSTALL_DIR}/bin）:"
+    for _t in "${INSTALL_DIR}/bin"/TestYomkPlugin*; do
+        [ -x "${_t}" ] && echo "   - $(basename "${_t}")"
+    done
+    echo " 可直接运行 TestYomkPluginSystem 验证"
+fi
+echo "==========================================="
+unset _LIB_LINE _t

@@ -43,7 +43,7 @@ struct CreateReq
 {
     std::string libId;
     std::string instanceName; /* 调用方指定的实例名，同一插件内唯一 */
-    std::string configFile;   /* 透传参数：允许为空，插件系统不读不解析 */
+    std::string instanceFile; /* 透传参数：允许为空，插件系统不读不解析 */
 };
 
 struct DestroyReq

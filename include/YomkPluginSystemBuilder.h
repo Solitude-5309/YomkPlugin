@@ -10,7 +10,7 @@ using namespace yomk;
 /*
  * YomkPluginSystemBuilder：插件系统构建编排层
  * 解析 .yomk 清单（模块目录名@实例名@实例文件，# 为注释），纯请求调用 Manager
- * 完成插件加载与实例创建（实例文件路径作为 configFile 透传），自身不持有插件/实例。
+ * 完成插件加载与实例创建（实例文件路径作为 instanceFile 透传），自身不持有插件/实例。
  */
 class YomkPluginSystemBuilder : public YomkService
 {

@@ -2,7 +2,7 @@
  * TestPlugin：插件系统示例插件
  * 演示完整 ABI 契约：meta 常量导出 + 实例工厂 + 实例删除。
  * instance_name 由宿主创建实例时指定（同一插件内唯一），
- * config_file 独立透传，两者互不影响。
+ * instance_file 独立透传，两者互不影响。
  */
 #include <YomkPluginSystem/YomkPlugin.h>
 
@@ -11,8 +11,8 @@
 class MyInstance : public YomkPluginInterface
 {
 public:
-    MyInstance(const std::string &name, const std::string &configFile)
-        : m_name(name), m_configFile(configFile) {}
+    MyInstance(const std::string &name, const std::string &instanceFile)
+        : m_name(name), m_instanceFile(instanceFile) {}
     virtual ~MyInstance() {}
 
     virtual const char *instanceName() const override { return m_name.c_str(); }
@@ -20,8 +20,8 @@ public:
     /* instanceId 不覆写，默认等于 instanceName */
 
 private:
-    std::string m_name;       /* 宿主指定的实例名 */
-    std::string m_configFile; /* 透传配置文件，插件自行决定是否使用 */
+    std::string m_name;         /* 宿主指定的实例名 */
+    std::string m_instanceFile; /* 透传实例文件，插件自行决定是否使用 */
 };
 
 static const YomkPluginMeta g_meta = {
@@ -37,7 +37,7 @@ static const YomkPluginMeta *metaFn()
     return &g_meta;
 }
 
-static YomkPluginInterface *createFn(const char *instance_name, const char *config_file)
+static YomkPluginInterface *createFn(const char *instance_name, const char *instance_file)
 {
     try
     {
@@ -45,7 +45,7 @@ static YomkPluginInterface *createFn(const char *instance_name, const char *conf
         {
             return nullptr; /* 实例名由宿主指定，必填 */
         }
-        return new MyInstance(instance_name, config_file ? config_file : "");
+        return new MyInstance(instance_name, instance_file ? instance_file : "");
     }
     catch (...)
     {

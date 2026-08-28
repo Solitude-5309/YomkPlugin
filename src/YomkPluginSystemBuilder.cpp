@@ -168,11 +168,11 @@ YomkResponse YomkPluginSystemBuilder::build(YomkPkgPtr pkg)
             }
             loadedLibs.insert(libId);
 
-            /* 创建实例：实例文件路径作为 configFile 透传，不读取内容 */
+            /* 创建实例：实例文件路径作为 instanceFile 透传，不读取内容 */
             CreateReq createReq;
             createReq.libId = libId;
             createReq.instanceName = entry.instanceName;
-            createReq.configFile = instancePath;
+            createReq.instanceFile = instancePath;
             resp = YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, createReq));
             if (resp.m_status != YomkResponse::eOk)
             {

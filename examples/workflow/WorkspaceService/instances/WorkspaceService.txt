@@ -1,0 +1,6 @@
+name: WorkspaceService
+version: 1.0.0
+input: listen_voice
+output: start@string
+output: voice_cmd@string
+parameter: cmd@string

@@ -8,6 +8,7 @@
 |------|------|------|
 | `/YomkPluginLoader` | 机制层 | dlopen/dlsym/dlclose、meta 读取、实例创建机制；不登记插件、不拥有实例 |
 | `/YomkPluginManager` | 数据层 | 插件表（meta 深拷贝）+ 实例表（shared_ptr 唯一所有者）、命名管理、实例生命周期管理 |
+| `/YomkPluginSystemBuilder` | 编排层 | 解析 .yomk 清单，纯请求驱动 Manager 加载插件、创建实例；不持有插件/实例 |
 
 两者为独立服务，纯请求通信。Loader 仅持有句柄表与 weak_ptr 实例存活表（引用计数保护：有存活实例时拒绝卸载）；业务数据全部由 Manager 统一管理。
 
@@ -51,6 +52,29 @@ YOMK_PLUGIN_MANAGER_INFO_PLUGINS() / INFO_PLUGIN(libId) / INFO_ALL()
 ```
 
 所有功能函数均用三参 `YomkInstallFunc` 安装，服务器层 `/YomkServerInfo` 内省可见类型标记。
+
+### /YomkPluginSystemBuilder（编排层，3 个接口）
+
+| URL | 入参 | 说明 |
+|-----|------|------|
+| `/YomkPluginSystemBuilder/build` | `BuildReq{workflowPath}` | 解析清单并组装插件系统，返回 `String` 汇总 `plugins:N instances:M` |
+| `/YomkPluginSystemBuilder/version` | 无 | 版本查询 |
+| `/YomkPluginSystemBuilder/all` | 无 | 内省：最近一次构建的清单解析结果与状态 |
+
+清单文件（如 `examples/workflow/my_plugin_system.yomk`）每行一个条目，格式为 `模块目录名@实例名@实例文件`（`@` 分隔三段）：
+
+```
+# 连接器
+ConnectionService@ConnectionService@ConnectionService.txt   # 连接器配置
+```
+
+- 以 `#` 开头的整行为注释，条目行中 `#` 之后为行内注释，解析时均忽略；空行跳过
+- 模块目录名 → `<清单所在目录>/<模块目录名>`，动态库固定为 `<模块目录>/lib/lib<模块目录名>.so`
+- 实例文件 → `<模块目录>/instances/<实例文件>`，其绝对路径作为 `configFile` 透传给插件工厂（不读取内容）
+
+build 流程：解析清单 → 校验模块目录/实例文件/动态库存在 → `/YomkPluginManager/load` 加载（已加载幂等跳过）→ `/YomkPluginManager/create_instance` 按清单实例名创建。任一步失败返回 `eNo` 并指明清单行号。
+
+完整可构建示例见 `examples/workflow/`（两个示例插件模块 + 清单），验证程序见 `test/TestYomkPluginSystemBuilder.cpp`。
 
 ## ABI 契约（插件开发者接口）
 

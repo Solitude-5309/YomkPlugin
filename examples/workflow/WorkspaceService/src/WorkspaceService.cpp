@@ -1,0 +1,59 @@
+/*
+ * WorkspaceService：workflow 示例插件（工作空间）
+ * 演示 Builder 按清单加载插件并创建实例，实例文件作为配置文件透传。
+ */
+#include <YomkPluginSystem/YomkPlugin.h>
+
+#include <string>
+
+class WorkspaceServiceInstance : public YomkPluginInterface
+{
+public:
+    WorkspaceServiceInstance(const std::string &name, const std::string &configFile)
+        : m_name(name), m_configFile(configFile) {}
+    virtual ~WorkspaceServiceInstance() {}
+
+    virtual const char *instanceName() const override { return m_name.c_str(); }
+    virtual const char *instanceType() const override { return "workflow"; }
+    /* instanceId 不覆写，默认等于 instanceName */
+
+private:
+    std::string m_name;       /* 宿主指定的实例名 */
+    std::string m_configFile; /* 透传实例文件，插件自行决定是否使用 */
+};
+
+static const YomkPluginMeta g_meta = {
+    YOMK_PLUGIN_ABI_VERSION,
+    "WorkspaceService",
+    "workflow",
+    "1.0.0",
+    "Yomk",
+    "Workflow example: workspace service plugin"};
+
+static const YomkPluginMeta *metaFn()
+{
+    return &g_meta;
+}
+
+static YomkPluginInterface *createFn(const char *instance_name, const char *config_file)
+{
+    try
+    {
+        if (!instance_name || !*instance_name)
+        {
+            return nullptr; /* 实例名由宿主指定，必填 */
+        }
+        return new WorkspaceServiceInstance(instance_name, config_file ? config_file : "");
+    }
+    catch (...)
+    {
+        return nullptr;
+    }
+}
+
+static void deleteFn(YomkPluginInterface *instance)
+{
+    delete instance;
+}
+
+YOMK_PLUGIN_EXPORT(metaFn, createFn, deleteFn)
